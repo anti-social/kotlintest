@@ -28,6 +28,10 @@ class TestCaseExecutor(val listener: TestEngineListener,
 
   fun execute() {
     try {
+      val bang = testCase.name.startsWith("!") && System.getProperty("kotlintest.bang.disable") == null
+      val tags = testCase.config.tags + testCase.spec.tags()
+      val excluded = Project.testCaseFilters().map { it.filter(testCase.description) }.any { it == TestFilterResult.Ignore }
+      val enabled = testCase.config.enabled && Project.tags().isActive(tags) && !bang && !excluded
 
       listener.prepareTestCase(testCase)
 
@@ -49,11 +53,11 @@ class TestCaseExecutor(val listener: TestEngineListener,
                             onComplete: (TestResult) -> Unit) {
         when {
           remaining.isEmpty() -> {
-            val result = executeTestIfActive(testCase, config)
+            val result = executeTestIfActive(testCase, config, enabled)
             onComplete(result)
           }
           else -> {
-            val ctx = TestCaseInterceptContext(testCase.description, testCase.spec, config)
+            val ctx = TestCaseInterceptContext(testCase.description, testCase.spec, config, enabled)
             remaining.first().intercept(ctx, { conf, callback -> interceptTestCase(remaining.drop(1), conf, callback) }, { onComplete(it) })
           }
         }
@@ -67,12 +71,12 @@ class TestCaseExecutor(val listener: TestEngineListener,
     }
   }
 
-  private fun executeTestIfActive(testCase: TestCase, config: TestCaseConfig): TestResult {
+  private fun executeTestIfActive(testCase: TestCase, config: TestCaseConfig, enabled: Boolean): TestResult {
 
-    val bang = testCase.name.startsWith("!") && System.getProperty("kotlintest.bang.disable") == null
-    val tags = config.tags + testCase.spec.tags()
-    val excluded = Project.testCaseFilters().map { it.filter(testCase.description) }.any { it == TestFilterResult.Ignore }
-    val enabled = config.enabled && Project.tags().isActive(tags) && !bang && !excluded
+//    val bang = testCase.name.startsWith("!") && System.getProperty("kotlintest.bang.disable") == null
+//    val tags = config.tags + testCase.spec.tags()
+//    val excluded = Project.testCaseFilters().map { it.filter(testCase.description) }.any { it == TestFilterResult.Ignore }
+//    val enabled = config.enabled && Project.tags().isActive(tags) && !bang && !excluded
 
     return if (enabled) {
       executeTestSet(TestSet(testCase, config.timeout, config.invocations, config.threads))

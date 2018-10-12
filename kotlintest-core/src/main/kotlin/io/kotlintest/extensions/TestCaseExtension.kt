@@ -68,4 +68,5 @@ interface TestCaseExtension : ProjectLevelExtension, SpecLevelExtension {
 
 data class TestCaseInterceptContext(val description: Description,
                                     val spec: Spec,
-                                    val config: TestCaseConfig)
+                                    val config: TestCaseConfig,
+                                    val enabled: Boolean)

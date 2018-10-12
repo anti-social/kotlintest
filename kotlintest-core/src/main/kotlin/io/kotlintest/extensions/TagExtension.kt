@@ -3,6 +3,7 @@ package io.kotlintest.extensions
 import io.kotlintest.StringTag
 import io.kotlintest.Tag
 import io.kotlintest.Tags
+import java.lang.RuntimeException
 
 /**
  * Returns [Tags] to be used by the Test Engine.
@@ -26,8 +27,12 @@ object SystemPropertyTagExtension : TagExtension {
 
   override fun tags(): Tags {
 
-    fun readTagsProperty(name: String): List<Tag> =
-        (System.getProperty(name) ?: "").split(',').filter { it.isNotBlank() }.map { StringTag(it.trim()) }
+    fun readTagsProperty(name: String): List<Tag> {
+      val tags = (System.getProperty(name)
+              ?: "").split(',').filter { it.isNotBlank() }.map { StringTag(it.trim()) }
+      println("$name: $tags")
+      return tags
+    }
 
     val includedTags = readTagsProperty("kotlintest.tags.include")
     val excludedTags = readTagsProperty("kotlintest.tags.exclude")
